@@ -19,14 +19,47 @@ class TradingBot:
         self.driver = webdriver.Chrome(executable_path='chromedriver.exe')
 
     def login(self):
-        pass
+        # get page
+        self.driver.get('https://login.cmegroup.com/sso/accountstatus/showAuth.action')
+        # send username
+        self.driver.find_element_by_xpath('/html/body/div[2]/div/div[2]/div/div/div[2]/div[1]/div/form/ul/li[1]/input').send_keys(self.username)
+        # send password
+        self.driver.find_element_by_xpath('/html/body/div[2]/div/div[2]/div/div/div[2]/div[1]/div/form/ul/li[2]/input').send_keys(self.password)
+        # click login button
+        self.driver.find_element_by_xpath('/html/body/div[2]/div/div[2]/div/div/div[2]/div[1]/div/form/div[2]/button').click()
+        # accept cookies
+        time.sleep(2)
+        # self.driver.find_element_by_xpath('/html/body/div[7]/div[3]/div/div/div[2]/div/div/button[2]').click()
+        # # time.sleep(10)
+        # # WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[7]/div[3]/div/div/div[2]/div/div/button[2]')))
+        # # self.driver.find_element_by_xpath('/html/body/div[7]/div[3]/div/div/div[2]/div/div/button[2]').click()
+        # time.sleep(2)
+        # self.driver.get('https://www.cmegroup.com/futures_challenge/dashboard')
+        # # WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[5]/div[3]/div/div/div[2]/div/div/button[2]')))
+        # # self.driver.find_element_by_xpath('/html/body/div[5]/div[3]/div/div/div[2]/div/div/button[2]').click()
 
     def quit_driver(self):
         self.driver.quit()
         self.driver = None
 
     def get_dashboard_stats(self):
-        pass #go to dashboard & get the stats on challenge acc snapshot
+        #go to dashboard & get the stats on challenge acc snapshot
+        self.driver.get('https://www.cmegroup.com/futures_challenge/dashboard')
+        # relogin
+        self.driver.find_element_by_xpath('/html/body/div[1]/div[1]/div/div/div/div/div/nav/div/div/div[1]/div[2]/button/span').click()
+        time.sleep(5)
+        # access dashboard
+        self.driver.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[2]/div[2]/div/div/div/div/div/div/div/div/div/div[2]/div/div/div/p[2]/a').click()
+        time.sleep(5)
+        #
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/div/div/div[8]/a')))
+        stats = {'working_orders': self.driver.find_element_by_xpath('/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/div/div/div[2]/span[2]').text,
+                 'open_positions': self.driver.find_element_by_xpath('/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/div/div/div[3]/span[2]').text,
+                 'balance': self.driver.find_element_by_xpath('/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/div/div/div[4]/span[2]').text,
+                 'margin': self.driver.find_element_by_xpath('/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/div/div/div[5]/span[2]').text,
+                 'you_control': self.driver.find_element_by_xpath('/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/div/div/div[6]/span[2]').text,
+                 'net_pl': self.driver.find_element_by_xpath('/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/div/div/div[7]/span[2]').text}
+        return stats
 
     def open_options_simulator(self):
         pass #open sim page & nav to BTC options
