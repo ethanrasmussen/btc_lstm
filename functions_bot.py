@@ -62,16 +62,30 @@ class TradingBot:
         return stats
 
     def open_options_simulator(self):
-        pass #open sim page & nav to BTC options
+        #open sim page & nav to BTC options
+        self.driver.get('https://www.cmegroup.com/futures_challenge/dashboard')
+        WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/div/div/div[8]/a')))
+        self.driver.find_element_by_xpath('/html/body/div[4]/div[1]/div[2]/div[2]/div/div/div[2]/div/div/div/div[8]/a').click()
+        # select options
+        #WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div/div/div[3]/div/h1/div/span/span[2]/label[2]/input')))
+        time.sleep(10)
+        self.driver.find_element_by_xpath('/html/body/div[3]/div/div/div[3]/div/h1/div/span/span[2]/label[2]').click()
+        # select crypto
+        self.driver.find_element_by_xpath('/html/body/div[3]/div/div/div[3]/div/div[2]/div/div/ul/li[8]/a').click()
+        # select BTC
+        #WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div/div/div[3]/div/div[2]/div/div/div/div[8]/div/div/div/div[3]/div/div[1]/div[2]/div/div/div/div')))
+        time.sleep(5)
+        self.driver.find_element_by_xpath('/html/body/div[3]/div/div/div[3]/div/div[2]/div/div/div/div[8]/div/div/div/div[3]/div/div[1]/div[2]/div/div/div/div').click()
+
+    def get_BTC_price(self):
+        self.open_options_simulator()
+        return self.driver.find_element_by_xpath('/html/body/div[3]/div/div/div[3]/div/div[2]/div/div/div/div[8]/div/div/div/div[3]/div/div[1]/div[2]/div/div/div/div/div[2]/div[3]/div[1]').text
 
     def purchase_option(self):
         pass #buy or sell 1 single option
 
     def flatten_all_positions(self):
         pass #flatten all active/working positions
-
-    def get_current_condor_value(self):
-        pass #do math to get value of all open positions
 
     def build_iron_condor(self):
         pass #buy normal iron condor (stay in range)
