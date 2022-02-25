@@ -9,7 +9,5 @@ tradingbot.login()
 print(tradingbot.get_dashboard_stats())
 
 # tradingbot.open_options_simulator()
-print(tradingbot.get_BTC_price())
-
-
-tradingbot.quit_driver()
+#print(tradingbot.get_BTC_price())
+print(tradingbot.get_options())

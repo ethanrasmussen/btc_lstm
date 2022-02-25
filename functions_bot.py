@@ -81,6 +81,118 @@ class TradingBot:
         self.open_options_simulator()
         return self.driver.find_element_by_xpath('/html/body/div[3]/div/div/div[3]/div/div[2]/div/div/div/div[8]/div/div/div/div[3]/div/div[1]/div[2]/div/div/div/div/div[2]/div[3]/div[1]').text
 
+    def get_options(self):
+        self.open_options_simulator()
+        # each strike contains price & last, with last = [call, put]
+        modifiers = [-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]
+        options_list = {
+            "strike-10": {
+                'price': 0,
+                'last': 0
+            },
+            "strike-9": {
+                'price': 0,
+                'last': 0
+            },
+            "strike-8": {
+                'price': 0,
+                'last': 0
+            },
+            "strike-7": {
+                'price': 0,
+                'last': 0
+            },
+            "strike-6": {
+                'price': 0,
+                'last': 0
+            },
+            "strike-5": {
+                'price': 0,
+                'last': 0
+            },
+            "strike-4": {
+                'price': 0,
+                'last': 0
+            },
+            "strike-3": {
+                'price': 0,
+                'last': 0
+            },
+            "strike-2": {
+                'price': 0,
+                'last': 0
+            },
+            "strike-1": {
+                'price': 0,
+                'last': 0
+            },
+            "strike": {
+                'price': 0,
+                'last': 0
+            },
+            "strike+1": {
+                'price': 0,
+                'last': 0
+            },
+            "strike+2": {
+                'price': 0,
+                'last': 0
+            },
+            "strike+3": {
+                'price': 0,
+                'last': 0
+            },
+            "strike+4": {
+                'price': 0,
+                'last': 0
+            },
+            "strike+5": {
+                'price': 0,
+                'last': 0
+            },
+            "strike+6": {
+                'price': 0,
+                'last': 0
+            },
+            "strike+7": {
+                'price': 0,
+                'last': 0
+            },
+            "strike+8": {
+                'price': 0,
+                'last': 0
+            },
+            "strike+9": {
+                'price': 0,
+                'last': 0
+            },
+            "strike+10": {
+                'price': 0,
+                'last': 0
+            }
+        }
+        time.sleep(2)
+        for m in range(len(modifiers)):
+            md = modifiers[m]
+            ind = m+1
+            print(f"{ind}\n{md}")
+            if md == 0:
+                options_list['strike']['price'] = self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{ind}]/td[7]/span').text
+                options_list['strike']['last'] = [
+                    self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{ind}]/td[6]').text,
+                    self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{ind}]/td[8]').text]
+            elif md < 0:
+                options_list[f'strike{md}']['price'] = self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{ind}]/td[7]/span').text
+                options_list[f'strike{md}']['last'] = [
+                    self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{ind}]/td[6]').text,
+                    self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{ind}]/td[8]').text]
+            elif md > 0:
+                options_list[f'strike+{md}']['price'] = self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{ind}]/td[7]/span').text
+                options_list[f'strike+{md}']['last'] = [
+                    self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{ind}]/td[6]').text,
+                    self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{ind}]/td[8]').text]
+        return options_list
+
     def purchase_option(self):
         pass #buy or sell 1 single option
 
