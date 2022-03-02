@@ -11,7 +11,6 @@ import pathlib
 
 
 class TradingBot:
-    # TODO: get chromedriver
 
     def __init__(self, username:str, password:str):
         self.username = username
@@ -202,8 +201,54 @@ class TradingBot:
     def build_iron_condor(self):
         pass #buy normal iron condor (stay in range)
 
-    def build_reverse_condor(self):
-        pass #buy reverse IC (exit range)
-
     def build_straddle(self):
         pass #make straddle (exit range/strike range)
+
+    def choose_strategy(self, price_prediction):
+        # do calculations to pick strategy based on price prediction & option chain
+        options = self.get_options()
+        portfolio_stats = self.get_dashboard_stats()
+        # calculate profitable ranges for IC's (+- 5)
+        ic_max_loss = abs((int(options['strike+5']['last'][0]) - int(options['strike-5']['last'][0])))
+        ic_profitable_range = None
+        # TODO
+        # calculate profitable range for straddle at strike
+        straddle_strike_max_loss = int(options['strike']['last'][0]) + int(options['strike']['last'][1])
+        straddle_loss_range = None
+        # TODO
+        # pick strategy
+        if int(price_prediction) in ic_profitable_range and int(price_prediction) not in [min(ic_profitable_range), max(ic_profitable_range)]:
+            # if predicted price is within the IC profitable range, but not on the very edges, then IC strategy is best
+            # TODO: expand the min/max ranges to capture a slightly wider field, use some sort of slicing
+            strategy = "ironcondor"
+        elif int(price_prediction) not in straddle_loss_range:
+            # if predicted price not in IC profit range & not in straddle loss range, then straddle strategy makes sense
+            # TODO: create a list of ranges slightly outside the loss range, to avoid being too close to the edges
+            strategy = "straddle"
+        elif int(price_prediction) in ic_profitable_range or int(price_prediction) not in straddle_loss_range:
+            # this detects edge cases that fall either on the edges of the IC profit range or barely outside the straddle loss range
+            if int(price_prediction) not in straddle_loss_range:
+                # prioritize straddle if both cases are true, as straddle has higher profit potential (and simpler flatten/exit)
+                strategy = "straddle"
+            elif int(price_prediction) in ic_profitable_range:
+                # if not straddle-eligible, then it will be IC-eligible
+                strategy = "ironcondor"
+        else:
+            # if the number doesn't fall within any of our preferred ranges, we can simply choose the lowest max loss, provided max loss is less than 5% of portfolio
+            max_allowed_loss = 0.05 * int(str(portfolio_stats['balance']).strip().replace('$',''))
+            if ic_max_loss < max_allowed_loss and straddle_strike_max_loss < max_allowed_loss:
+                # chooses lowest max loss if both below max allowed loss
+                if ic_max_loss > straddle_strike_max_loss:
+                    strategy = "straddle"
+                elif straddle_strike_max_loss > ic_max_loss:
+                    strategy = "ironcondor"
+            elif min([ic_max_loss, straddle_strike_max_loss]) < max_allowed_loss:
+                # if only one max loss below max allowed loss, select that one
+                if ic_max_loss < max_allowed_loss:
+                    strategy = "ironcondor"
+                else:
+                    strategy = "straddle"
+            else:
+                # if all else fails, neither strategy seems clear, and the max losses of both strats exceed max allowed loss, then we do nothing for the day
+                strategy = "nothing"
+        return strategy
