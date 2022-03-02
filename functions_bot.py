@@ -196,7 +196,11 @@ class TradingBot:
         pass #buy or sell 1 single option
 
     def flatten_all_positions(self):
-        pass #flatten all active/working positions
+        self.open_options_simulator()
+        try:
+            self.driver.find_element_by_xpath('/html/body/div[3]/div/div/div[3]/div/div[5]/div/div/div[1]/div/div/button').click()
+        except:
+            print("Couldn't find FLATTEN button. Possible that all positions are already flattened.")
 
     def build_iron_condor(self):
         pass #buy normal iron condor (stay in range)
