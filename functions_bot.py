@@ -192,8 +192,37 @@ class TradingBot:
                     self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{ind}]/td[8]').text]
         return options_list
 
-    def purchase_option(self):
-        pass #buy or sell 1 single option
+    def purchase_option(self, chain_index, buy, qty, call=False, put=False, on_chain=False):
+        if call or put:
+            if not on_chain:
+                # don't reopen the sim if we don't need to
+                self.open_options_simulator()
+            time.sleep(2)
+            self.driver.find_element_by_xpath(f'/html/body/div[3]/div/div/div[3]/div/div[3]/div/div[3]/div/div[2]/table/tbody/tr[{chain_index}]/td[7]/span').click()
+            # enter quantity
+            self.driver.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div[1]/div[4]/div[1]/div[1]/div[2]/input').send_keys(qty)
+            # switch to MKT order
+            self.driver.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div[1]/div[4]/div[1]/div[1]/div[1]/div/div/button').click()
+            self.driver.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div[1]/div[4]/div[1]/div[1]/div[1]/div/div/ul/li[1]/a').click()
+            # press button for call or put
+            if call:
+                self.driver.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div[1]/div[4]/div[1]/div[3]/div[2]/div/span/label[2]').click()
+            elif put:
+                self.driver.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div[1]/div[4]/div[1]/div[3]/div[2]/div/span/label[1]').click()
+            # press button to buy or sell
+            if buy:
+                self.driver.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div[1]/div[4]/div[1]/div[1]/div[3]/div/span/label[1]').click()
+            if not buy:
+                self.driver.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div[1]/div[4]/div[1]/div[1]/div[3]/div/span/label[2]').click()
+            # press button to submit order
+            time.sleep(1)
+            self.driver.find_element_by_xpath('/html/body/div[10]/div/div[2]/div/div[2]/div[4]/div[2]/input[1]').click()
+            # confirm order
+            time.sleep(0.5)
+            self.driver.find_element_by_xpath('/html/body/div[11]/div/div[2]/div[3]/button[1]').click()
+            # close trade log tab
+            time.sleep(0.5)
+            self.driver.find_element_by_xpath('/html/body/div[11]/div/div[2]/div[2]/div/div[2]/input[1]').click()
 
     def flatten_all_positions(self):
         self.open_options_simulator()
@@ -203,21 +232,28 @@ class TradingBot:
             print("Couldn't find FLATTEN button. Possible that all positions are already flattened.")
 
     def build_iron_condor(self):
-        pass #buy normal iron condor (stay in range)
+        # buy all 4 wings of the condor
+        self.purchase_option(chain_index=7, buy=True, put=True, qty=1) #OTM put buy below strike
+        self.purchase_option(chain_index=9, buy=False, put=True, on_chain=True, qty=1) #OTM/ATM put sell below strike (closer)
+        self.purchase_option(chain_index=13, buy=False, call=True, on_chain=True, qty=1) #OTM/ATM call sell above strike (closer)
+        self.purchase_option(chain_index=15, buy=True, call=True, on_chain=True, qty=1) #OTM call buy above strike
 
     def build_straddle(self):
-        pass #make straddle (exit range/strike range)
+        # buy 2 legs of straddle (x3!)
+        self.purchase_option(chain_index=11, buy=True, call=True, qty=3) #long call at strike
+        self.purchase_option(chain_index=11, buy=True, put=True, on_chain=True, qty=3) #long put at strike
+        # TODO: due to margin requirements, it may be possible to, 1. decrease qty, and 2. use short straddles instead of ICs
 
     def choose_strategy(self, price_prediction):
         # do calculations to pick strategy based on price prediction & option chain
         options = self.get_options()
         portfolio_stats = self.get_dashboard_stats()
         # calculate profitable ranges for IC's (+- 5)
-        ic_max_loss = abs((int(options['strike+5']['last'][0]) - int(options['strike-5']['last'][0])))
+        ic_max_loss = (abs((int(options['strike+5']['last'][0]) - int(options['strike-5']['last'][0]))) * 5)
         ic_profitable_range = None
         # TODO
         # calculate profitable range for straddle at strike
-        straddle_strike_max_loss = int(options['strike']['last'][0]) + int(options['strike']['last'][1])
+        straddle_strike_max_loss = (int(options['strike']['last'][0]) + int(options['strike']['last'][1]) * 3 * 5)
         straddle_loss_range = None
         # TODO
         # pick strategy
