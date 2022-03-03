@@ -106,8 +106,7 @@ while bot_running:
             elif strategy == "ironcondor":
                 # bot will use the IC function to attempt to build an IC around strike
                 # if IC fails due to margin/bal, a brokenwing butterfly will be attempted, if that too fails, the entire process will be terminated
-                # TODO: proper input parameters for IC to account for BWB calculations
-                trade = tradingbot.build_iron_condor()
+                trade = tradingbot.build_iron_condor(prediction, btc_price)
                 print(f"Successfully attempted Iron Condor strategy. Trade Code: {trade}")
         except:
             print("ERROR: Strategy could not be executed by webdriver."); break
