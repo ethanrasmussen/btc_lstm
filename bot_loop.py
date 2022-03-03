@@ -46,6 +46,7 @@ while bot_running:
               f"Time: {currenttime.hour}:{currenttime.minute}")
         # TRY/EX FOR BOT & POSITION RESET:
         try:
+            tradingbot.reset_option_pull()
             tradingbot.quit_driver()
             tradingbot.reset_driver()
             tradingbot.login()

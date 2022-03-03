@@ -16,6 +16,11 @@ class TradingBot:
         self.username = username
         self.password = password
         self.driver = webdriver.Chrome(executable_path='chromedriver.exe')
+        self.most_recent_option_chain_pull = None # this is a useful shortcut for BWB calculations to avoid redundancy & maximize efficiency
+
+    def reset_option_pull(self):
+        # avoids accidentally pulling an old option chain
+        self.most_recent_option_chain_pull = None
 
     def login(self):
         # get page
@@ -237,48 +242,68 @@ class TradingBot:
         except:
             print("Couldn't find FLATTEN button. Possible that all positions are already flattened.")
 
-    def build_iron_condor(self):
+    def build_iron_condor(self, btc_prediction, btc_price):
         try:
-            # buy all 4 wings of the condor
-            self.purchase_option(chain_index=7, buy=True, put=True, qty=1) #OTM put buy below strike
-            self.purchase_option(chain_index=9, buy=False, put=True, on_chain=True, qty=1) #OTM/ATM put sell below strike (closer)
-            self.purchase_option(chain_index=13, buy=False, call=True, on_chain=True, qty=1) #OTM/ATM call sell above strike (closer)
-            self.purchase_option(chain_index=15, buy=True, call=True, on_chain=True, qty=1) #OTM call buy above strike
+            # buy all 4 wings of the condor (LP, SP, STRIKE, SC, LC)
+            self.purchase_option(chain_index=9, buy=True, put=True, qty=1) #OTM put buy below strike
+            self.purchase_option(chain_index=10, buy=False, put=True, on_chain=True, qty=1) #OTM/ATM put sell below strike (closer)
+            self.purchase_option(chain_index=12, buy=False, call=True, on_chain=True, qty=1) #OTM/ATM call sell above strike (closer)
+            self.purchase_option(chain_index=13, buy=True, call=True, on_chain=True, qty=1) #OTM call buy above strike
             return "IC" # indicate successful completion of IC
         except:
             # if IC fails due to margin req, then it is ideal to terminate the position & attempt to enter a broken-wing butterfly
             time.sleep(1); self.flatten_all_positions(); time.sleep(1)
-            # TODO: need directional parameter here...
-            trade = self.build_brokenwing_butterfly()
+            trade = self.build_brokenwing_butterfly(btc_prediction, btc_price)
             return trade # indicate successful completion of BWB, or FAIL status of trade
 
     def build_straddle(self):
         # buy 2 legs of long straddle
         self.purchase_option(chain_index=11, buy=True, call=True, qty=1) #long call at strike
         self.purchase_option(chain_index=11, buy=True, put=True, on_chain=True, qty=1) #long put at strike
-        # TODO: due to margin requirements, it may be possible to, 1. decrease qty, and 2. use short straddles instead of ICs
 
-    def build_brokenwing_butterfly(self, direction):
-        if direction in ['up', 'down']:
-            try:
-                # buy 2 short straddle legs @ strike
-                self.purchase_option(chain_index=11, buy=False, call=True, qty=1)  # short call at strike
-                self.purchase_option(chain_index=11, buy=False, put=True, on_chain=True, qty=1)  # short put at strike
-                # calculate breakevens and determine proper strike to purchase
-                # TODO: buy proper option
-                if direction == "up":
-                    pass
-                elif direction == "down":
-                    pass
-                return "BWB"
-            except:
-                # if unable to build the full broken-wing butterfly due to margin req, then it is imperative to exit all positions & terminate trade
-                time.sleep(1); self.flatten_all_positions()
-                return "FAIL"
+    def build_brokenwing_butterfly(self, btc_prediction, btc_price):
+        try:
+            # buy 2 short straddle legs @ strike
+            self.purchase_option(chain_index=11, buy=False, call=True, qty=1)  # short call at strike
+            self.purchase_option(chain_index=11, buy=False, put=True, on_chain=True, qty=1)  # short put at strike
+            # calculate direction
+            # cycle through multiple possible purchases, if all fail then position will be flattened & FAIL trade status
+            if btc_prediction > btc_price:
+                # upward prediction
+                # price is estimated to stay in relatively small range, but go upward, so we want upward protection/hedging
+                try:
+                    self.purchase_option(chain_index=13, buy=True, call=True, on_chain=True, qty=1)
+                except:
+                    try:
+                        self.purchase_option(chain_index=14, buy=False, call=True, on_chain=True, qty=1)
+                    except:
+                        try:
+                            self.purchase_option(chain_index=12, buy=False, call=True, on_chain=True, qty=1)
+                        except:
+                            time.sleep(1); self.flatten_all_positions(); return "FAIL"
+            elif btc_prediction < btc_price:
+                # downward prediction
+                # price is estimated to stay in relatively small range, but go downward, so we want downward protection/hedging
+                try:
+                    self.purchase_option(chain_index=9, buy=True, put=True, qty=1)
+                except:
+                    try:
+                        self.purchase_option(chain_index=8, buy=True, put=True, qty=1)
+                    except:
+                        try:
+                            self.purchase_option(chain_index=10, buy=True, put=True, qty=1)
+                        except:
+                            time.sleep(1); self.flatten_all_positions(); return "FAIL"
+            return "BWB"
+        except:
+            # if unable to build the full broken-wing butterfly due to margin req, then it is imperative to exit all positions & terminate trade
+            time.sleep(1); self.flatten_all_positions()
+            return "FAIL"
 
     def choose_strategy(self, price_prediction):
         # do calculations to pick strategy based on price prediction & option chain
         options = self.get_options()
+        self.most_recent_option_chain_pull = options #this will be pulled during BWB calculations
         portfolio_stats = self.get_dashboard_stats()
         # calculate profitable ranges for IC's (+- 5)
         ic_max_loss = (abs((int(options['strike+5']['last'][0]) - int(options['strike-5']['last'][0]))) * 5)
