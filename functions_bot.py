@@ -305,22 +305,19 @@ class TradingBot:
         options = self.get_options()
         self.most_recent_option_chain_pull = options #this will be pulled during BWB calculations
         portfolio_stats = self.get_dashboard_stats()
-        # calculate profitable ranges for IC's (+- 5)
-        ic_max_loss = (abs((int(options['strike+5']['last'][0]) - int(options['strike-5']['last'][0]))) * 5)
-        ic_profitable_range = None
-        # TODO
+        # calculate profitable ranges for IC's
+        ic_max_loss = (abs((int(options['strike-1']['price']) - int(options['strike-2']['price']))) * 5)
+        ic_profitable_range = range(int(options['strike-1']['price']), (int(options['strike+1']['price']) + 1))
         # calculate profitable range for straddle at strike
-        straddle_strike_max_loss = (int(options['strike']['last'][0]) + int(options['strike']['last'][1]) * 3 * 5)
-        straddle_loss_range = None
-        # TODO
+        straddle_strike_max_loss = (int(options['strike']['last'][0]) + int(options['strike']['last'][1]) * 5)
+        straddle_loss_range = range((int(options['strike']['price']) - straddle_strike_max_loss), (int(options['strike']['price']) + 1 + straddle_strike_max_loss))
         # pick strategy
-        if int(price_prediction) in ic_profitable_range and int(price_prediction) not in [min(ic_profitable_range), max(ic_profitable_range)]:
+        if int(price_prediction) in ic_profitable_range[(len(ic_profitable_range) * 0.025):-(len(ic_profitable_range) * 0.025)]:
+            # edge cases account for the 2.5% on the edges of the list
             # if predicted price is within the IC profitable range, but not on the very edges, then IC strategy is best
-            # TODO: expand the min/max ranges to capture a slightly wider field, use some sort of slicing
             strategy = "ironcondor"
-        elif int(price_prediction) not in straddle_loss_range:
-            # if predicted price not in IC profit range & not in straddle loss range, then straddle strategy makes sense
-            # TODO: create a list of ranges slightly outside the loss range, to avoid being too close to the edges
+        elif int(price_prediction) not in range(((int(options['strike']['price']) - straddle_strike_max_loss) * 0.95), ((int(options['strike']['price']) + straddle_strike_max_loss) * 1.05) + 1):
+            # if predicted price not in IC profit range & not in straddle loss range (slightly expanded by 5% for caution), then straddle strategy makes sense
             strategy = "straddle"
         elif int(price_prediction) in ic_profitable_range or int(price_prediction) not in straddle_loss_range:
             # this detects edge cases that fall either on the edges of the IC profit range or barely outside the straddle loss range
@@ -328,7 +325,7 @@ class TradingBot:
                 # prioritize straddle if both cases are true, as straddle has higher profit potential (and simpler flatten/exit)
                 strategy = "straddle"
             elif int(price_prediction) in ic_profitable_range:
-                # if not straddle-eligible, then it will be IC-eligible
+                # if not straddle-eligible, then it will be IC-eligible (and BWB eligible)
                 strategy = "ironcondor"
         else:
             # if the number doesn't fall within any of our preferred ranges, we can simply choose the lowest max loss, provided max loss is less than 5% of portfolio
