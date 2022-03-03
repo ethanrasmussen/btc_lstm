@@ -9,7 +9,7 @@ tradingbot.login()
 print(tradingbot.get_dashboard_stats())
 
 # tradingbot.open_options_simulator()
-#print(tradingbot.get_BTC_price())
+print(tradingbot.get_BTC_price())
 print(tradingbot.get_options())
 
 #tradingbot.purchase_option(chain_index=11, buy=True, qty=1, call=True, on_chain=True)

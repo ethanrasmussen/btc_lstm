@@ -38,8 +38,14 @@ class TradingBot:
         # # self.driver.find_element_by_xpath('/html/body/div[5]/div[3]/div/div/div[2]/div/div/button[2]').click()
 
     def quit_driver(self):
-        self.driver.quit()
-        self.driver = None
+        try:
+            self.driver.quit()
+            self.driver = None
+        except:
+            pass
+
+    def reset_driver(self):
+        self.driver = webdriver.Chrome(executable_path='chromedriver.exe')
 
     def get_dashboard_stats(self):
         #go to dashboard & get the stats on challenge acc snapshot
@@ -232,17 +238,43 @@ class TradingBot:
             print("Couldn't find FLATTEN button. Possible that all positions are already flattened.")
 
     def build_iron_condor(self):
-        # buy all 4 wings of the condor
-        self.purchase_option(chain_index=7, buy=True, put=True, qty=1) #OTM put buy below strike
-        self.purchase_option(chain_index=9, buy=False, put=True, on_chain=True, qty=1) #OTM/ATM put sell below strike (closer)
-        self.purchase_option(chain_index=13, buy=False, call=True, on_chain=True, qty=1) #OTM/ATM call sell above strike (closer)
-        self.purchase_option(chain_index=15, buy=True, call=True, on_chain=True, qty=1) #OTM call buy above strike
+        try:
+            # buy all 4 wings of the condor
+            self.purchase_option(chain_index=7, buy=True, put=True, qty=1) #OTM put buy below strike
+            self.purchase_option(chain_index=9, buy=False, put=True, on_chain=True, qty=1) #OTM/ATM put sell below strike (closer)
+            self.purchase_option(chain_index=13, buy=False, call=True, on_chain=True, qty=1) #OTM/ATM call sell above strike (closer)
+            self.purchase_option(chain_index=15, buy=True, call=True, on_chain=True, qty=1) #OTM call buy above strike
+            return "IC" # indicate successful completion of IC
+        except:
+            # if IC fails due to margin req, then it is ideal to terminate the position & attempt to enter a broken-wing butterfly
+            time.sleep(1); self.flatten_all_positions(); time.sleep(1)
+            # TODO: need directional parameter here...
+            trade = self.build_brokenwing_butterfly()
+            return trade # indicate successful completion of BWB, or FAIL status of trade
 
     def build_straddle(self):
-        # buy 2 legs of straddle (x3!)
-        self.purchase_option(chain_index=11, buy=True, call=True, qty=3) #long call at strike
-        self.purchase_option(chain_index=11, buy=True, put=True, on_chain=True, qty=3) #long put at strike
+        # buy 2 legs of long straddle
+        self.purchase_option(chain_index=11, buy=True, call=True, qty=1) #long call at strike
+        self.purchase_option(chain_index=11, buy=True, put=True, on_chain=True, qty=1) #long put at strike
         # TODO: due to margin requirements, it may be possible to, 1. decrease qty, and 2. use short straddles instead of ICs
+
+    def build_brokenwing_butterfly(self, direction):
+        if direction in ['up', 'down']:
+            try:
+                # buy 2 short straddle legs @ strike
+                self.purchase_option(chain_index=11, buy=False, call=True, qty=1)  # short call at strike
+                self.purchase_option(chain_index=11, buy=False, put=True, on_chain=True, qty=1)  # short put at strike
+                # calculate breakevens and determine proper strike to purchase
+                # TODO: buy proper option
+                if direction == "up":
+                    pass
+                elif direction == "down":
+                    pass
+                return "BWB"
+            except:
+                # if unable to build the full broken-wing butterfly due to margin req, then it is imperative to exit all positions & terminate trade
+                time.sleep(1); self.flatten_all_positions()
+                return "FAIL"
 
     def choose_strategy(self, price_prediction):
         # do calculations to pick strategy based on price prediction & option chain

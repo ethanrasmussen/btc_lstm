@@ -44,8 +44,24 @@ while bot_running:
               f"------------------\n"
               f"Date: {currenttime.month}/{currenttime.day}/{currenttime.year}\n"
               f"Time: {currenttime.hour}:{currenttime.minute}")
-        # TODO: before doing anything else, the bot should clear & reset the driver/login/cookie, AND should flatten all positions
-        # TODO: report P/L and other portfolio stats as well
+        # TRY/EX FOR BOT & POSITION RESET:
+        try:
+            tradingbot.quit_driver()
+            tradingbot.reset_driver()
+            tradingbot.login()
+            tradingbot.flatten_all_positions()
+            time.sleep(60) # 1 min wait time to ensure that position flattening goes through
+        except:
+            print("ERROR: There was an error resetting the trading bot and/or flattening existing positions."); break
+        # TRY/EX FOR PRICING DATA & PORFOLIO DATA:
+        try:
+            btc_price = int(tradingbot.get_BTC_price())
+            portfolio_stats = tradingbot.get_dashboard_stats()
+            print(f"Current BTC Price: ${btc_price}\n"
+                  f"Portfolio Balance: {portfolio_stats['balance']}\n"
+                  f"Net P/L: {portfolio_stats['net_pl']}")
+        except:
+            print("ERROR: There was an error getting pricing & portfolio data."); break
         # TRY/EX FOR MARKET DATA:
         try:
             today = int(time.mktime(dt.datetime(currenttime.year, currenttime.month, currenttime.day, 0, 0).timetuple()))
@@ -83,11 +99,15 @@ while bot_running:
             if strategy == "nothing":
                 print("Strategy successful. Nothing done.")
             elif strategy == "straddle":
-                # TODO
-                pass
+                # bot will attempt to build a long straddle
+                tradingbot.build_straddle()
+                print("Successfully built Long Straddle.")
             elif strategy == "ironcondor":
-                # TODO
-                pass
+                # bot will use the IC function to attempt to build an IC around strike
+                # if IC fails due to margin/bal, a brokenwing butterfly will be attempted, if that too fails, the entire process will be terminated
+                # TODO: proper input parameters for IC to account for BWB calculations
+                trade = tradingbot.build_iron_condor()
+                print(f"Successfully attempted Iron Condor strategy. Trade Code: {trade}")
         except:
             print("ERROR: Strategy could not be executed by webdriver."); break
     print("Bot cycle complete for the day.\n")
