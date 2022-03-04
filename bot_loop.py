@@ -24,14 +24,17 @@ from plotly.subplots import make_subplots
 
 # import LSTM model
 model = load_model('btc_lstm')
+print("LSTM Model loaded.")
 # init bot
 username, password = open('credentials.txt', 'r').readlines()
 tradingbot = bot.TradingBot(username, password)
+print("TradingBot instance initiated.")
 
 
 # loop @ ~9am
 bot_running = True
 lastday = 0
+print("Starting loop...")
 while bot_running:
     currenttime = dt.datetime.now()
     runbot = False
