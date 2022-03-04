@@ -82,9 +82,9 @@ while bot_running:
         # TRY/EX FOR MODEL PREDICTION:
         try:
             # scale market data
-            # TODO: will importing JNB scaler lead to greater prediction accuracy?
             scaler = MinMaxScaler(feature_range=(0, 1))
-            pred_data = scaler.fit_transform(np.array(pred_data).reshape(-1, 1))
+            # use full historical data for scaler transform to ensure rescaled prediction values from 1-week data scale equivalent to training data
+            pred_data = scaler.fit_transform(np.array((pd.read_csv('BTC-USD.csv')['Close'])).reshape(-1, 1))
             # make new price prediction
             prediction = model.predict(pred_data)
             # rescale prediction
