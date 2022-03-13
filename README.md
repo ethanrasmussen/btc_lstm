@@ -8,7 +8,7 @@ BTC was chosen as the optimal security among CME's selection due to its volatili
 Finally, once a strategy is chosen, the proper trades will be automatically submitted to the CME Challenge Simulator website using Selenium-powered web automation. 
 
 ### Model Performance:
-LSTM model has ±5.1% average error. Given that BTC prices are currently hovering around $40,000 it would generally be optimal for the model to be far more accurate (as 5% of $40k is $2,000, which is a pretty wide margin). 
+LSTM model has a ±5.1% average error. Given that BTC prices are currently hovering around $40,000 it would generally be optimal for the model to be far more accurate (as 5% of $40k is $2,000, which is a pretty wide margin). 
 Fortunately, since this trading bot is based more on an accurate prediction of directional volatility than accurate price prediction, the model proved sufficient for the purposes of option trading. 
 However, I do hope to continue learning how to improve and optimize machine learning models (including LSTMs). This is the first LSTM model I've made, and I hope to improve as I gain more experience.
 
