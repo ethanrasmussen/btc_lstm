@@ -13,7 +13,8 @@ Fortunately, since this trading bot is based more on an accurate prediction of d
 However, I do hope to continue learning how to improve and optimize machine learning models (including LSTMs). This is the first LSTM model I've made, and I hope to improve as I gain more experience.
 
 ### Competition Performance:
-N/A yet. Competition is currently in progress during the month of March!
+The trading bot placed in 3rd place!
 
-### More Info:
-N/A yet.
+![Leaderboard showing 3rd place win.](final_leaderboard.PNG)
+
+<sub>_Last names of other participants hidden for privacy_<sub>
